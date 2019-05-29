@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>My Web Client</h1>
+
+<p id="conn">Not connected</p>
+
+<p id="received_msg">what we receive from the server:</p>
+
+<p id="sent_order">no order sent!</p>
+
+<p id="trip_order">Please place your trip order below</p>
+
+<form id="trip-order-form" action="/">
+    Pick-up (from 1 to 100): <input type="number" id="pickup" size="20" name="age"><br>
+    Destination (from 1 to 100): <input type="number" id="destination" size="20" name="age"><br>
+    <button type="button" onclick="myFunction()">Send out trip order!</button>
+    <button type="button" onclick="clearForm()">New Order!</button>
+</form>
+
+</body>
+</html>
+
+<script>
+// const socket = new WebSocket('ws://localhost:8080');
+const socket = new WebSocket('ws://scout.wanip.ch:12121/testserver');
+ 
+socket.addEventListener('open', () => {
+  socket.send('Hello World!');
+  document.getElementById("conn").innerHTML="Server and Client are connected!";
+});
+ 
+socket.addEventListener('message', event => {
+  console.log(`Message from server: ${event.data}`);
+  // var msg_jsonobj = JSON.parse(${event.data});
+  // document.getElementById("received_msg").innerHTML='Message from server: ${event.data}';  
+});
+
+function createJSON(pickup_station_id, destination_station_id) {
+  jsonObj = [];
+
+  item = {}
+  item["InterfaceNo"] = pickup_station_id;
+  item["TowerNo"] = destination_station_id;
+
+  jsonObj.push(item);
+
+  console.log(jsonObj);
+
+  document.getElementById("sent_order").innerHTML=jsonObj;
+
+
+  return jsonObj;
+}
+
+
+function sendMessage(socket, InterfaceNo, TowerNo) {
+
+  socket.send(
+    JSON.stringify({
+      InterfaceNo,
+      TowerNo
+    })
+  )
+
+  document.getElementById("sent_order").innerHTML='InterfaceNo = '+InterfaceNo+'; TowerNo = '+TowerNo;
+}
+ 
+function receiveMessage(message) {
+  console.log(`${message.userName} is saying: ${message.content}`)
+}
+
+function clearForm() {
+  document.getElementById("trip_order").innerHTML="Please place your trip order below";
+  document.getElementById("sent_order").innerHTML="no order sent!";
+}
+
+function myFunction() {
+
+  var pickup_station_id = '0';
+  var destination_station_id = '0';
+  pickup_station_id = document.getElementById("pickup").value;
+  destination_station_id = document.getElementById("destination").value;
+
+  submitOK = "true";
+
+
+  if (isNaN(pickup_station_id) || pickup_station_id < 1 || pickup_station_id > 100) {
+    alert("The pickup_station_id must be a number between 1 and 100");
+    submitOK = "false";
+  }
+
+  if (isNaN(destination_station_id) || destination_station_id < 1 || destination_station_id > 100) {
+    alert("The pickup_station_id must be a number between 1 and 100");
+    submitOK = "false";
+  }
+
+  if (submitOK == "false") {
+    return false;
+  }
+  document.getElementById("trip_order").innerHTML="Your trip order has been placed. Thank you for your patience.";
+  sendMessage(socket, Number(pickup_station_id), Number(destination_station_id));
+
+}
+
+</script>
